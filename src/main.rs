@@ -1,11 +1,7 @@
 use std::env;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use chrono::Local;
-use std::sync::Mutex;
-
-lazy_static::lazy_static! {
-    static ref ITEM_ID_COUNTER: Mutex<u32> = Mutex::new(0);
-}
 
 struct Item {
     id: u32,
@@ -15,13 +11,9 @@ struct Item {
 }
 
 impl Item {
-    fn new(icontent: &str, date: &str, status: &str) -> Self {
-        let mut counter = ITEM_ID_COUNTER.lock().unwrap();
-        *counter += 1;
-        let id = *counter;
-
+    fn new(id: &u32, content: &str, date: &str, status: &str) -> Self {
         Self {
-            id,
+            id: *id,
             content: content.to_string(),
             date: date.to_string(),
             status: status.to_string()
@@ -34,6 +26,27 @@ impl Item {
             self.id, self.content, self.date, self.status
         )
     }
+}
+
+fn get_next_id() -> u32 {
+    let id_file = "id_counter.txt";
+
+    let mut id = match fs::read_to_string(id_file) {
+        Ok(content) => content.trim().parse::<u32>().unwrap_or(0),
+        Err(_) => 0,
+    };
+
+    id += 1;
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(id_file)
+        .expect("unable to open id file");
+    writeln!(file, "{}", id).expect("Unable to write to ID file");
+
+    id
 }
 
 fn main() {
@@ -55,13 +68,20 @@ fn main() {
             eprintln!("Please provide an item to add");
             return;
         }
-
+        
+        let id = get_next_id();
         let text = &args[2];
-        let item = Item::new(text, &formatted_date, "undone");
+        let item = Item::new(&id,text, &formatted_date, "undone");
 
         let item_data = format!("{}\n", item.display());
-        fs::write("todo.txt", item_data).expect("Unable to write to file");
-        
-        println!("Added {}" item.display())
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open("todo.txt")
+            .expect("Unable to open or create todo.txt");
+        writeln!(file, "{}", item.display()).expect("Unable to write to file");
+
+        println!("Added {}", item.display())
     }
 }
