@@ -2,7 +2,7 @@ use std::env;
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
+use serde_json::Result;
 use chrono::Local;
 
 #[derive(Serialize, Deserialize)]
@@ -41,7 +41,7 @@ fn mark_done(id: u32) {
         .expect("Unable to open todo.txt");
     let reader = BufReader::new(file);
 
-    let mut lines: Vec<String> = reader.lines()
+    let lines: Vec<String> = reader.lines()
         .map(|line| line.expect("Unable to read line"))
         .collect();
     
@@ -85,7 +85,18 @@ fn add_to_file(item: Item) -> Result<()> {
         .open("todo.json")
         .expect("Unable to open or create todo.json");
     writeln!(file, "{}", j).expect("Unable to write to file");
+    println!("Added item id: {}", item.id);
     Ok(())
+}
+
+fn clear_list() {
+    let file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("todo.json")
+        .expect("Unable to open todo.json");
+    file.set_len(0).expect("Unable to clear file");
+    println!("Todo list cleared.");
 }
 
 fn display_list() {
@@ -103,11 +114,55 @@ fn display_list() {
 
     for line in lines {
         let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
-        println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status)
+        if item.status == "done" {
+            println!("\x1b[9m{}: {} - {} - {}~\x1b[0m", item.id, item.content, item.date, item.status);
+        } else {
+            println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status);
+        }
     }
 
-
 }
+
+fn delete_item(id: u32) {
+    let file = OpenOptions::new()
+        .read(true)
+        .open("todo.json")
+        .expect("Unable to open todo.txt");
+    let reader = BufReader::new(file);
+
+    let lines: Vec<String> = reader.lines()
+        .map(|line| line.expect("Unable to read line"))
+        .collect();
+    
+    let mut updated_lines: Vec<String> = Vec::new();
+    let mut item_found = false;
+
+    for line in lines {
+        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
+        if item.id != id {
+            updated_lines.push(line);
+        } else {
+            item_found = true;
+        }
+    }
+
+    if !item_found {
+        eprintln!("Item id: {} doesn't exist", id);
+        return;
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("todo.json")
+        .expect("Unable to open todo.json for writing");
+    for line in updated_lines {
+        writeln!(file, "{}", line).expect("Unable to write to file");
+    }
+    
+    println!("Item id {} deleted.", id);
+}
+
 fn main() {
     let now = Local::now();
     let formatted_time = now.format("%Y-%m-%d %H:%M:%S").to_string();
@@ -134,7 +189,7 @@ fn main() {
             status: "undone".to_string(),
         };
 
-        add_to_file(item);
+        add_to_file(item).expect("Unable to add item");
     } else if command == "markdone" {
         if args.len() < 3 {
             eprintln!("Please provide an item id to mark done");
@@ -146,6 +201,30 @@ fn main() {
         mark_done(id);
     } else if command == "list" {
         display_list();
+    } else if command == "delete" {
+        if args.len() < 3 {
+            eprintln!("Please provide an item id to delete");
+            return;
+        }
+
+        let input = &args[2];
+        let id: u32 = input.parse().expect("Failed to parse string to u32");
+        delete_item(id);
+    } else if command == "help" {
+        println!("Available commands:");
+        println!("add <item> - Add a new item to the todo list");
+        println!("markdone <id> - Mark an item as done");
+        println!("delete <id> - Delete an item from the todo list");
+        println!("list - Display the todo list");
+        println!("info - basic application info");
+    } else if command == "clearlist" {
+        clear_list();
+    } else if command == "info" {
+        println!("todo-rust 0.1 by Veeti Kolanen :)");
+        println!("manage a list of things to do.");
+        println!("type help for available commands!");
+    } else {
+        eprintln!("Invalid command, type 'help' for available commands.");
     }
 
 }
