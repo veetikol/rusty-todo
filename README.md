@@ -16,11 +16,11 @@ rusty-todo is a simple and lightweight command-line application for managing tas
 1. Ensure you have [Rust](https://www.rust-lang.org/) installed on your system.
 2. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/todo-rust.git
+   git clone https://github.com/yourusername/rusty-todo.git
    ```
 3. Navigate to the project directory:
    ```bash
-   cd todo-rust
+   cd rusty-todo
    ```
 4. Build the project:
    ```bash
@@ -28,7 +28,7 @@ rusty-todo is a simple and lightweight command-line application for managing tas
    ```
 5. Run the application:
    ```bash
-   ./target/release/todo-rust
+   ./target/release/rusty-todo
    ```
 
 After these steps you might want to add the executable to your $PATH
@@ -39,31 +39,31 @@ Run the application with one of the following commands:
 
 - **Add a task**:
   ```bash
-  ./todo-rust add "Your task description"
+  ./rusty-todo add "Your task description"
   ```
 - **Mark a task as done**:
   ```bash
-  ./todo-rust markdone <task_id>
+  ./rusty-todo markdone <task_id>
   ```
 - **Delete a task**:
   ```bash
-  ./todo-rust delete <task_id>
+  ./rusty-todo delete <task_id>
   ```
 - **List all tasks**:
   ```bash
-  ./todo-rust list
+  ./rusty-todo list
   ```
 - **Clear the task list**:
   ```bash
-  ./todo-rust clearlist
+  ./rusty-todo clearlist
   ```
 - **View help**:
   ```bash
-  ./todo-rust help
+  ./rusty-todo help
   ```
 - **View application info**:
   ```bash
-  ./todo-rust info
+  ./rusty-todo info
   ```
 
 ## Example
@@ -72,11 +72,11 @@ Usage example:
 
 1. Add a task:
    ```bash
-   ./todo-rust add "Buy groceries"
+   ./rusty-todo add "Buy groceries"
    ```
 2. List tasks:
    ```bash
-   ./todo-rust list
+   ./rusty-todo list
    ```
    Output:
    ```
@@ -85,14 +85,14 @@ Usage example:
    ```
 3. Mark the task as done:
    ```bash
-   ./todo-rust markdone 1
+   ./rusty-todo markdone 1
    ```
 4. List tasks again:
    ```bash
-   ./todo-rust list
+   ./rusty-todo list
    ```
    Output:
    ```
    Your todo list:
-   \x1b[9m1: Buy groceries - 2025-04-01 12:00:00 - done\x1b[0m
+   ~1: Buy groceries - 2025-04-01 12:00:00 - done~
    ```
