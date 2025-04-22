@@ -1,31 +1,16 @@
 use std::env;
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
+use serde::{Deserialize, Serialize};
+use serde_json::{Result, Value};
 use chrono::Local;
 
+#[derive(Serialize, Deserialize)]
 struct Item {
     id: u32,
     content: String,
     date: String,
     status: String,
-}
-
-impl Item {
-    fn new(id: &u32, content: &str, date: &str, status: &str) -> Self {
-        Self {
-            id: *id,
-            content: content.to_string(),
-            date: date.to_string(),
-            status: status.to_string()
-        }
-    }
-
-    fn display(&self) -> String {
-        format!(
-            "{}: {} (added on {}, status: {})",
-            self.id, self.content, self.date, self.status
-        )
-    }
 }
 
 fn get_next_id() -> u32 {
@@ -52,7 +37,7 @@ fn get_next_id() -> u32 {
 fn mark_done(id: u32) {
     let file = OpenOptions::new()
         .read(true)
-        .open(file_name)
+        .open("todo.json")
         .expect("Unable to open todo.txt");
     let reader = BufReader::new(file);
 
@@ -63,10 +48,21 @@ fn mark_done(id: u32) {
 
 }
 
+fn add_to_file(item: Item) -> Result<()> {
+    let j = serde_json::to_string(&item)?;
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open("todo.json")
+        .expect("Unable to open or create todo.json");
+    writeln!(file, "{}", j).expect("Unable to write to file");
+    Ok(())
+}
+
 fn main() {
     let now = Local::now();
-    let formatted_date = now.format("%Y-%m-%d %H:%M:%S").to_string();
-    let valid_commands= ["add", "markdone", "delete"];
 
     let args: Vec<String> = env::args().collect();
 
@@ -83,19 +79,14 @@ fn main() {
             return;
         }
         
-        let id = get_next_id();
         let text = &args[2];
-        let item = Item::new(&id,text, &formatted_date, "undone");
+        let item = Item {
+            id: get_next_id(),
+            content: text.to_string(),
+            date: now.to_string(),
+            status: "undone".to_string(),
+        };
 
-        let item_data = format!("{}\n", item.display());
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .append(true)
-            .open("todo.txt")
-            .expect("Unable to open or create todo.txt");
-        writeln!(file, "{}", item.display()).expect("Unable to write to file");
-
-        println!("Added {}", item.display())
+        add_to_file(item);
     }
 }
