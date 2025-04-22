@@ -59,7 +59,7 @@ Run the application with one of the following commands:
   ```
   **Clear done tasks**
    ```bash
-  ./rusty-todo clearlist
+  ./rusty-todo cleardone
   ```
 - **View help**:
   ```bash
