@@ -88,9 +88,29 @@ fn add_to_file(item: Item) -> Result<()> {
     Ok(())
 }
 
+fn display_list() {
+    let file = OpenOptions::new()
+        .read(true)
+        .open("todo.json")
+        .expect("Unable to open todo.txt");
+    let reader = BufReader::new(file);
+
+    let lines: Vec<String> = reader.lines()
+        .map(|line| line.expect("Unable to read line"))
+        .collect();
+
+    println!("Your todo list:");
+
+    for line in lines {
+        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
+        println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status)
+    }
+
+
+}
 fn main() {
     let now = Local::now();
-
+    let formatted_time = now.format("%Y-%m-%d %H:%M:%S").to_string();
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
@@ -110,7 +130,7 @@ fn main() {
         let item = Item {
             id: get_next_id(),
             content: text.to_string(),
-            date: now.to_string(),
+            date: formatted_time,
             status: "undone".to_string(),
         };
 
@@ -124,6 +144,8 @@ fn main() {
         let input = &args[2];
         let id: u32 = input.parse().expect("Failed to parse string to u32");
         mark_done(id);
+    } else if command == "list" {
+        display_list();
     }
 
 }
