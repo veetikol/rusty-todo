@@ -41,10 +41,37 @@ fn mark_done(id: u32) {
         .expect("Unable to open todo.txt");
     let reader = BufReader::new(file);
 
-    let mut lines: Vec<String> = Vec::new();
+    let mut lines: Vec<String> = reader.lines()
+        .map(|line| line.expect("Unable to read line"))
+        .collect();
+    
+    let mut updated_lines: Vec<String> = Vec::new();
     let mut item_found = false;
 
+    for line in lines {
+        let mut item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
+        if item.id == id {
+            item.status = "done".to_string();
+            item_found = true;
+        }
+        updated_lines.push(serde_json::to_string(&item).expect("Unable to serialize JSON"))
+    }
+
+    if !item_found {
+        eprintln!("Item id: {} doesn't exist", id);
+        return;
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("todo.json")
+        .expect("Unable to open todo.json for writing");
+    for line in updated_lines {
+        writeln!(file, "{}", line).expect("Unable to write to file");
+    }
     
+    println!("Item id {} marked done.", id);
 
 }
 
@@ -88,5 +115,15 @@ fn main() {
         };
 
         add_to_file(item);
+    } else if command == "markdone" {
+        if args.len() < 3 {
+            eprintln!("Please provide an item id to mark done");
+            return;
+        }
+
+        let input = &args[2];
+        let id: u32 = input.parse().expect("Failed to parse string to u32");
+        mark_done(id);
     }
+
 }
