@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use chrono::Local;
 
 struct Item {
@@ -47,6 +47,20 @@ fn get_next_id() -> u32 {
     writeln!(file, "{}", id).expect("Unable to write to ID file");
 
     id
+}
+
+fn mark_done(id: u32) {
+    let file = OpenOptions::new()
+        .read(true)
+        .open(file_name)
+        .expect("Unable to open todo.txt");
+    let reader = BufReader::new(file);
+
+    let mut lines: Vec<String> = Vec::new();
+    let mut item_found = false;
+
+    
+
 }
 
 fn main() {
