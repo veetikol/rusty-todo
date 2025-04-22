@@ -13,6 +13,15 @@ struct Item {
     status: String,
 }
 
+fn reset_id() {
+    let file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("id_counter.txt")
+        .expect("Unable to open id_counter");
+    file.set_len(0).expect("Unable to clear file");
+}
+
 fn get_next_id() -> u32 {
     let id_file = "id_counter.txt";
 
@@ -96,7 +105,39 @@ fn clear_list() {
         .open("todo.json")
         .expect("Unable to open todo.json");
     file.set_len(0).expect("Unable to clear file");
+    reset_id();
     println!("Todo list cleared.");
+}
+
+fn clear_done() {
+    let file = OpenOptions::new()
+        .read(true)
+        .open("todo.json")
+        .expect("Unable to open todo.txt");
+    let reader = BufReader::new(file);
+
+    let lines: Vec<String> = reader.lines()
+        .map(|line| line.expect("Unable to read line"))
+        .collect();
+    
+    let mut updated_lines: Vec<String> = Vec::new();
+
+    for line in lines {
+        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
+        if item.status == "undone" {
+            updated_lines.push(line);
+        } 
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("todo.json")
+        .expect("Unable to open todo.json for writing");
+    for line in updated_lines {
+        writeln!(file, "{}", line).expect("Unable to write to file");
+    }
+    println!("Cleared done items")
 }
 
 fn display_list() {
@@ -215,10 +256,14 @@ fn main() {
         println!("add <item> - Add a new item to the todo list");
         println!("markdone <id> - Mark an item as done");
         println!("delete <id> - Delete an item from the todo list");
+        println!("clearlist - Wipe the todo list");
+        println!("cleardone - Remove done items");
         println!("list - Display the todo list");
         println!("info - basic application info");
     } else if command == "clearlist" {
         clear_list();
+    } else if command == "cleardone" {
+        clear_done();  
     } else if command == "info" {
         println!("todo-rust 0.1 by Veeti Kolanen :)");
         println!("manage a list of things to do.");
