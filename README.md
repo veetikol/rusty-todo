@@ -1,6 +1,6 @@
-# todo-rust
+# rusty-todo
 
-todo-rust is a simple and lightweight command-line application for managing tasks, written in Rust. It allows you to efficiently add, list, mark as done, delete, and clear tasks.
+rusty-todo is a simple and lightweight command-line application for managing tasks, written in Rust. It allows you to efficiently add, list, mark as done, delete, and clear tasks.
 
 ## Features
 
@@ -94,9 +94,5 @@ Usage example:
    Output:
    ```
    Your todo list:
-   ~1: Buy groceries - 2025-04-01 12:00:00 - done~
+   \x1b[9m1: Buy groceries - 2025-04-01 12:00:00 - done\x1b[0m
    ```
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
