@@ -1,9 +1,14 @@
 use std::env;
-use std::fs::{self, OpenOptions};
+use std::fs::{self, OpenOptions, File};
 use std::io::{BufRead, BufReader, Write};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use chrono::Local;
+
+#[derive(Serialize, Deserialize)]
+enum Status {
+    Undone,
+    Done,
+}
 
 #[derive(Serialize, Deserialize)]
 struct Item {
@@ -11,6 +16,34 @@ struct Item {
     content: String,
     date: String,
     status: String,
+}
+
+fn load_todo_list() -> Vec<Item> {
+    let file = OpenOptions::new()
+        .read(true)
+        .open("todo.json")
+        .unwrap_or_else(|_| {
+            File::create("todo.json").expect("Unable to create file");
+            File::open("todo.json").expect("Unable to open file")
+        });
+    let reader = BufReader::new(file);
+
+    reader
+        .lines()
+        .filter_map(|line| serde_json::from_str(&line.unwrap_or_default()).ok())
+        .collect::<Vec<Item>>()
+}
+
+fn save_todo_list(items: &[Item]) {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("todo.json")
+        .expect("Unable to opne todo.json");
+    for item in items {
+        writeln!(file, "{}", serde_json::to_string(item).expect("Unable to serialize item"))
+            .expect("Unable to write file");
+    }
 }
 
 fn reset_id() {
@@ -43,167 +76,6 @@ fn get_next_id() -> u32 {
     id
 }
 
-fn mark_done(id: u32) {
-    let file = OpenOptions::new()
-        .read(true)
-        .open("todo.json")
-        .expect("Unable to open todo.txt");
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines()
-        .map(|line| line.expect("Unable to read line"))
-        .collect();
-    
-    let mut updated_lines: Vec<String> = Vec::new();
-    let mut item_found = false;
-
-    for line in lines {
-        let mut item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
-        if item.id == id {
-            item.status = "done".to_string();
-            item_found = true;
-        }
-        updated_lines.push(serde_json::to_string(&item).expect("Unable to serialize JSON"))
-    }
-
-    if !item_found {
-        eprintln!("Item id: {} doesn't exist", id);
-        return;
-    }
-
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("todo.json")
-        .expect("Unable to open todo.json for writing");
-    for line in updated_lines {
-        writeln!(file, "{}", line).expect("Unable to write to file");
-    }
-    
-    println!("Item id {} marked done.", id);
-
-}
-
-fn add_to_file(item: Item) -> Result<()> {
-    let j = serde_json::to_string(&item)?;
-
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .append(true)
-        .open("todo.json")
-        .expect("Unable to open or create todo.json");
-    writeln!(file, "{}", j).expect("Unable to write to file");
-    println!("Added item id: {}", item.id);
-    Ok(())
-}
-
-fn clear_list() {
-    let file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("todo.json")
-        .expect("Unable to open todo.json");
-    file.set_len(0).expect("Unable to clear file");
-    reset_id();
-    println!("Todo list cleared.");
-}
-
-fn clear_done() {
-    let file = OpenOptions::new()
-        .read(true)
-        .open("todo.json")
-        .expect("Unable to open todo.txt");
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines()
-        .map(|line| line.expect("Unable to read line"))
-        .collect();
-    
-    let mut updated_lines: Vec<String> = Vec::new();
-
-    for line in lines {
-        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
-        if item.status == "undone" {
-            updated_lines.push(line);
-        } 
-    }
-
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("todo.json")
-        .expect("Unable to open todo.json for writing");
-    for line in updated_lines {
-        writeln!(file, "{}", line).expect("Unable to write to file");
-    }
-    println!("Cleared done items")
-}
-
-fn display_list() {
-    let file = OpenOptions::new()
-        .read(true)
-        .open("todo.json")
-        .expect("Unable to open todo.txt");
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines()
-        .map(|line| line.expect("Unable to read line"))
-        .collect();
-
-    println!("Your todo list:");
-
-    for line in lines {
-        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
-        if item.status == "done" {
-            println!("\x1b[9m{}: {} - {} - {}~\x1b[0m", item.id, item.content, item.date, item.status);
-        } else {
-            println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status);
-        }
-    }
-
-}
-
-fn delete_item(id: u32) {
-    let file = OpenOptions::new()
-        .read(true)
-        .open("todo.json")
-        .expect("Unable to open todo.txt");
-    let reader = BufReader::new(file);
-
-    let lines: Vec<String> = reader.lines()
-        .map(|line| line.expect("Unable to read line"))
-        .collect();
-    
-    let mut updated_lines: Vec<String> = Vec::new();
-    let mut item_found = false;
-
-    for line in lines {
-        let item: Item = serde_json::from_str(&line).expect("Unable to parse JSON");
-        if item.id != id {
-            updated_lines.push(line);
-        } else {
-            item_found = true;
-        }
-    }
-
-    if !item_found {
-        eprintln!("Item id: {} doesn't exist", id);
-        return;
-    }
-
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("todo.json")
-        .expect("Unable to open todo.json for writing");
-    for line in updated_lines {
-        writeln!(file, "{}", line).expect("Unable to write to file");
-    }
-    
-    println!("Item id {} deleted.", id);
-}
-
 fn main() {
     let now = Local::now();
     let formatted_time = now.format("%Y-%m-%d %H:%M:%S").to_string();
@@ -215,6 +87,7 @@ fn main() {
     }
 
     let command = &args[1];
+    let mut todo_list = load_todo_list();
 
     if command == "add" {
         if args.len() < 3 {
@@ -230,7 +103,9 @@ fn main() {
             status: "undone".to_string(),
         };
 
-        add_to_file(item).expect("Unable to add item");
+        todo_list.push(item);
+        save_todo_list(&todo_list);
+
     } else if command == "markdone" {
         if args.len() < 3 {
             eprintln!("Please provide an item id to mark done");
@@ -239,9 +114,24 @@ fn main() {
 
         let input = &args[2];
         let id: u32 = input.parse().expect("Failed to parse string to u32");
-        mark_done(id);
+        if let Some(item) = todo_list.iter_mut().find(|item| item.id == id) {
+            item.status = "done".to_string();
+            println!("Item id {} marked done.",  id);
+        } else {
+            eprintln!("Item id {} does not exist", id);
+        }
+        save_todo_list(&todo_list);
+
     } else if command == "list" {
-        display_list();
+        println!("Your todo list:");
+        for item in &todo_list {
+            if item.status == "done" {
+                println!("\x1b[9m{}: {} - {} - {}~\x1b[0m", item.id, item.content, item.date, item.status);
+            } else {
+                println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status);
+            }
+        }
+
     } else if command == "delete" {
         if args.len() < 3 {
             eprintln!("Please provide an item id to delete");
@@ -250,7 +140,14 @@ fn main() {
 
         let input = &args[2];
         let id: u32 = input.parse().expect("Failed to parse string to u32");
-        delete_item(id);
+        if let Some(pos) = todo_list.iter().position(|item| item.id == id) {
+            todo_list.remove(pos);
+            println!("Item id {} deleted.", id);
+        } else {
+            eprintln!("Item id: {} doesn't exist", id);
+        }
+        save_todo_list(&todo_list);
+
     } else if command == "help" {
         println!("Available commands:");
         println!("add <item> - Add a new item to the todo list");
@@ -261,9 +158,14 @@ fn main() {
         println!("list - Display the todo list");
         println!("info - basic application info");
     } else if command == "clearlist" {
-        clear_list();
+        todo_list.clear();
+        reset_id();
+        save_todo_list(&todo_list);
+        println!("Todo list cleared.")
     } else if command == "cleardone" {
-        clear_done();  
+        todo_list.retain(|item| item.status == "undone");
+        save_todo_list(&todo_list);
+        println!("Cleared done items");  
     } else if command == "info" {
         println!("todo-rust 0.1 by Veeti Kolanen :)");
         println!("manage a list of things to do.");
