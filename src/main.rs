@@ -3,12 +3,7 @@ use std::fs::{self, OpenOptions, File};
 use std::io::{BufRead, BufReader, Write};
 use serde::{Deserialize, Serialize};
 use chrono::Local;
-
-#[derive(Serialize, Deserialize)]
-enum Status {
-    Undone,
-    Done,
-}
+use colored::*;
 
 #[derive(Serialize, Deserialize)]
 struct Item {
@@ -82,7 +77,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        eprintln!("Invalid command, type 'help' for available commands.");
+        eprintln!("{}", "Invalid command, type 'help' for available commands.".red());
         return;
     }
 
@@ -91,7 +86,7 @@ fn main() {
 
     if command == "add" {
         if args.len() < 3 {
-            eprintln!("Please provide an item to add");
+            eprintln!("{}", "Please provide an item to add".red());
             return;
         }
         
@@ -103,12 +98,14 @@ fn main() {
             status: "undone".to_string(),
         };
 
+        println!("{} {} {} {}", "Added task".green(), text.blue(), "with id:".green(), item.id.to_string().blue());
         todo_list.push(item);
         save_todo_list(&todo_list);
+        
 
     } else if command == "markdone" {
         if args.len() < 3 {
-            eprintln!("Please provide an item id to mark done");
+            eprintln!("{}", "Please provide an item id to mark done".red());
             return;
         }
 
@@ -116,25 +113,26 @@ fn main() {
         let id: u32 = input.parse().expect("Failed to parse string to u32");
         if let Some(item) = todo_list.iter_mut().find(|item| item.id == id) {
             item.status = "done".to_string();
-            println!("Item id {} marked done.",  id);
+            println!("{} {} {}", "Item id".green(),  id.to_string().blue(), "marked done!".green());
         } else {
-            eprintln!("Item id {} does not exist", id);
+            eprintln!("{} {} {}", "Item id".red(), id.to_string().blue(), "does not exist".red());
         }
         save_todo_list(&todo_list);
 
     } else if command == "list" {
-        println!("Your todo list:");
+        let title = "Your todo list:".blue();
+        println!("{}", title);
         for item in &todo_list {
             if item.status == "done" {
-                println!("\x1b[9m{}: {} - {} - {}~\x1b[0m", item.id, item.content, item.date, item.status);
+                println!("\x1b[9m{}: {} - {} - {}\x1b[0m", item.id, item.content, item.date, item.status);
             } else {
-                println!("{}. {}, {}, {}", item.id, item.content, item.date, item.status);
+                println!("{}. {}, {}, {}", item.id, item.content.bold(), item.date, item.status.red());
             }
         }
 
     } else if command == "delete" {
         if args.len() < 3 {
-            eprintln!("Please provide an item id to delete");
+            eprintln!("{}", "Please provide an item id to delete".red());
             return;
         }
 
@@ -142,7 +140,7 @@ fn main() {
         let id: u32 = input.parse().expect("Failed to parse string to u32");
         if let Some(pos) = todo_list.iter().position(|item| item.id == id) {
             todo_list.remove(pos);
-            println!("Item id {} deleted.", id);
+            println!("{} {} {}", "Item id".green(), id.to_string().blue(), "deleted".green());
         } else {
             eprintln!("Item id: {} doesn't exist", id);
         }
@@ -161,17 +159,17 @@ fn main() {
         todo_list.clear();
         reset_id();
         save_todo_list(&todo_list);
-        println!("Todo list cleared.")
+        println!("{}", "Todo list cleared".green());
     } else if command == "cleardone" {
         todo_list.retain(|item| item.status == "undone");
         save_todo_list(&todo_list);
-        println!("Cleared done items");  
+        println!("{}", "Cleared done items".green());  
     } else if command == "info" {
         println!("todo-rust 0.1 by Veeti Kolanen :)");
         println!("manage a list of things to do.");
         println!("type help for available commands!");
     } else {
-        eprintln!("Invalid command, type 'help' for available commands.");
+        eprintln!("{}", "Invalid command, type 'help' for available commands.".red());
     }
 
 }
