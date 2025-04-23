@@ -18,7 +18,7 @@ disclaimer: i'm aware millions of programs like this exist already, i just reall
 1. Ensure you have [Rust](https://www.rust-lang.org/) installed on your system.
 2. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/rusty-todo.git
+   git clone https://github.com/veetikol/rusty-todo.git
    ```
 3. Navigate to the project directory:
    ```bash
