@@ -98,7 +98,7 @@ fn main() {
             status: "undone".to_string(),
         };
 
-        println!("{} {} {} {}", "Added task".green(), text.blue(), "with id:".green(), item.id.to_string().blue());
+        println!("{} {} {} {}", "Added task".green(), text, "with id:".green(), item.id.to_string().blue());
         todo_list.push(item);
         save_todo_list(&todo_list);
         
@@ -113,9 +113,9 @@ fn main() {
         let id: u32 = input.parse().expect("Failed to parse string to u32");
         if let Some(item) = todo_list.iter_mut().find(|item| item.id == id) {
             item.status = "done".to_string();
-            println!("{} {} {}", "Item id".green(),  id.to_string().blue(), "marked done!".green());
+            println!("{} {} {}", "Item id".green(),  id, "marked done!".green());
         } else {
-            eprintln!("{} {} {}", "Item id".red(), id.to_string().blue(), "does not exist".red());
+            eprintln!("{} {} {}", "Item id".red(), id, "does not exist".red());
         }
         save_todo_list(&todo_list);
 
@@ -140,7 +140,7 @@ fn main() {
         let id: u32 = input.parse().expect("Failed to parse string to u32");
         if let Some(pos) = todo_list.iter().position(|item| item.id == id) {
             todo_list.remove(pos);
-            println!("{} {} {}", "Item id".green(), id.to_string().blue(), "deleted".green());
+            println!("{} {} {}", "Item id".green(), id, "deleted".green());
         } else {
             eprintln!("Item id: {} doesn't exist", id);
         }
