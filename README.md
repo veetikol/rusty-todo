@@ -13,6 +13,9 @@ disclaimer: i'm aware millions of programs like this exist already, i just reall
 - **Clear List**: Remove all tasks from the list.
 - **Lightweight**: Minimal dependencies and easy to use.
 
+## Demo
+![](demo.gif)
+
 ## Installation
 
 1. Ensure you have [Rust](https://www.rust-lang.org/) installed on your system.
