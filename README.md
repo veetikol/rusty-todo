@@ -2,6 +2,8 @@
 
 rusty-todo is a simple and lightweight command-line application for managing tasks, written in Rust. It allows you to efficiently add, list, mark as done, delete, and clear tasks.
 
+disclaimer: i'm aware millions of programs like this exist already, i just really wanted to write one myself :)
+
 ## Features
 
 - **Add Tasks**: Create tasks with a unique ID and timestamp.
@@ -11,12 +13,15 @@ rusty-todo is a simple and lightweight command-line application for managing tas
 - **Clear List**: Remove all tasks from the list.
 - **Lightweight**: Minimal dependencies and easy to use.
 
+## Demo
+![](demo.gif)
+
 ## Installation
 
 1. Ensure you have [Rust](https://www.rust-lang.org/) installed on your system.
 2. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/rusty-todo.git
+   git clone https://github.com/veetikol/rusty-todo.git
    ```
 3. Navigate to the project directory:
    ```bash
