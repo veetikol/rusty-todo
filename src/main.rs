@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 use chrono::Local;
 use colored::*;
 
+const TODO_FILE: &str = "todo.json";
+const ID_COUNTER_FILE: &str = "id_counter.txt";
+
 #[derive(Serialize, Deserialize)]
 struct Item {
     id: u32,
@@ -13,13 +16,13 @@ struct Item {
     status: String,
 }
 
-fn load_todo_list() -> Vec<Item> {
+fn load_todo_list(todo_file: &str) -> Vec<Item> {
     let file = OpenOptions::new()
         .read(true)
-        .open("todo.json")
+        .open(todo_file)
         .unwrap_or_else(|_| {
-            File::create("todo.json").expect("Unable to create file");
-            File::open("todo.json").expect("Unable to open file")
+            File::create(todo_file).expect("Unable to create file");
+            File::open(todo_file).expect("Unable to open file")
         });
     let reader = BufReader::new(file);
 
@@ -29,11 +32,11 @@ fn load_todo_list() -> Vec<Item> {
         .collect::<Vec<Item>>()
 }
 
-fn save_todo_list(items: &[Item]) {
+fn save_todo_list(items: &[Item], todo_file: &str) {
     let mut file = OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open("todo.json")
+        .open(todo_file)
         .expect("Unable to opne todo.json");
     for item in items {
         writeln!(file, "{}", serde_json::to_string(item).expect("Unable to serialize item"))
@@ -41,18 +44,16 @@ fn save_todo_list(items: &[Item]) {
     }
 }
 
-fn reset_id() {
+fn reset_id(id_file: &str) {
     let file = OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open("id_counter.txt")
+        .open(id_file)
         .expect("Unable to open id_counter");
     file.set_len(0).expect("Unable to clear file");
 }
 
-fn get_next_id() -> u32 {
-    let id_file = "id_counter.txt";
-
+fn get_next_id(id_file: &str) -> u32 {
     let mut id = match fs::read_to_string(id_file) {
         Ok(content) => content.trim().parse::<u32>().unwrap_or(0),
         Err(_) => 0,
@@ -82,7 +83,7 @@ fn main() {
     }
 
     let command = &args[1];
-    let mut todo_list = load_todo_list();
+    let mut todo_list = load_todo_list(TODO_FILE);
 
     if command == "add" {
         if args.len() < 3 {
@@ -92,7 +93,7 @@ fn main() {
         
         let text = &args[2];
         let item = Item {
-            id: get_next_id(),
+            id: get_next_id(ID_COUNTER_FILE),
             content: text.to_string(),
             date: formatted_time,
             status: "undone".to_string(),
@@ -100,7 +101,7 @@ fn main() {
 
         println!("{} {} {} {}", "Added task".green(), text, "with id:".green(), item.id.to_string().blue());
         todo_list.push(item);
-        save_todo_list(&todo_list);
+        save_todo_list(&todo_list, TODO_FILE);
         
 
     } else if command == "markdone" {
@@ -117,7 +118,7 @@ fn main() {
         } else {
             eprintln!("{} {} {}", "Item id".red(), id, "does not exist".red());
         }
-        save_todo_list(&todo_list);
+        save_todo_list(&todo_list, TODO_FILE);
 
     } else if command == "list" {
         let title = "Your todo list:".blue();
@@ -144,7 +145,7 @@ fn main() {
         } else {
             eprintln!("Item id: {} doesn't exist", id);
         }
-        save_todo_list(&todo_list);
+        save_todo_list(&todo_list, TODO_FILE);
 
     } else if command == "help" {
         println!("Available commands:");
@@ -157,12 +158,12 @@ fn main() {
         println!("info - basic application info");
     } else if command == "clearlist" {
         todo_list.clear();
-        reset_id();
-        save_todo_list(&todo_list);
+        reset_id(ID_COUNTER_FILE);
+        save_todo_list(&todo_list, TODO_FILE);
         println!("{}", "Todo list cleared".green());
     } else if command == "cleardone" {
         todo_list.retain(|item| item.status == "undone");
-        save_todo_list(&todo_list);
+        save_todo_list(&todo_list, TODO_FILE);
         println!("{}", "Cleared done items".green());  
     } else if command == "info" {
         println!("todo-rust 0.1 by Veeti Kolanen :)");
