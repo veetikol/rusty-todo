@@ -121,15 +121,20 @@ fn main() {
         save_todo_list(&todo_list, TODO_FILE);
 
     } else if command == "list" {
-        let title = "Your todo list:".blue();
-        println!("{}", title);
-        for item in &todo_list {
-            if item.status == "done" {
-                println!("\x1b[9m{}: {} - {} - {}\x1b[0m", item.id, item.content, item.date, item.status);
-            } else {
-                println!("{}. {}, {}, {}", item.id, item.content.bold(), item.date, item.status.red());
+        if todo_list.len() == 0 {
+            println!("{}", "Your todo list is empty".blue())
+        } else {
+            let title = "Your todo list:".blue();
+            println!("{}", title);
+            for item in &todo_list {
+                if item.status == "done" {
+                    println!("\x1b[9m{}: {} - {} - {}\x1b[0m", item.id, item.content, item.date, item.status);
+                } else {
+                    println!("{}. {}, {}, {}", item.id, item.content.bold(), item.date, item.status.red());
+                }
             }
         }
+        
 
     } else if command == "delete" {
         if args.len() < 3 {
